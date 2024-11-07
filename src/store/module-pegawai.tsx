@@ -8,6 +8,31 @@ export const GetPegawai = async () => {
 
   return response.data
 }
+
+export const InsertPegawai = async (taskData: any) => {
+  const response = await api.post(`/insert-datamdpegawai`, taskData)
+
+  return response.data
+}
+
+export const UpdatePegawai = async (taskData: any) => {
+  const response = await api.post<ResponseDataMdPegawai>(`/update-datamdpegawai`, taskData)
+
+  return response.data
+}
+
+export const DeletePegawai = async (id_offpegawai: string) => {
+  try {
+    const bodyFormData = new FormData()
+    bodyFormData.append('id_offpegawai', id_offpegawai)
+    const response = await api.post<ResponseDataMdPegawai>(`/delete-datamdpegawai/:`, bodyFormData)
+
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
 export const GetStatistikTask = async () => {
   const response = await api.get<ResponseDataMdStatistik>(`/get-datamdstatistiktask`)
 

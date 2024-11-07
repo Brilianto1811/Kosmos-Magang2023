@@ -27,7 +27,11 @@ export function middleware(request: NextRequest) {
     '/nonasn/cetak_cv/',
     '/nonasn/ruang_rapat/',
     '/nonasn/gallery_rutinitas/',
-    '/nonasn/dashboard/profile-akun/TabAccount/'
+    '/nonasn/dashboard/profile-akun/TabAccount/',
+    '/nonasn/superadmin/kelola_pegawai/',
+    '/nonasn/superadmin/kelola_reportos/',
+    '/nonasn/superadmin/log_presensi/',
+    '/nonasn/superadmin/rating_pegawai/'
   ]
   const urlKepalaDinas = [
     '/asn/dashboard/',
@@ -79,7 +83,11 @@ export function middleware(request: NextRequest) {
     '/nonasn/cetak_cv/',
     '/nonasn/ruang_rapat/',
     '/nonasn/agenda/',
-    '/nonasn/gallery_rutinitas/'
+    '/nonasn/gallery_rutinitas/',
+    '/nonasn/superadmin/kelola_pegawai/',
+    '/nonasn/superadmin/kelola_reportos/',
+    '/nonasn/superadmin/log_presensi/',
+    '/nonasn/superadmin/rating_pegawai/'
   ]
 
   const exclude = ['images', 'static', '_next', 'locales']
@@ -89,7 +97,7 @@ export function middleware(request: NextRequest) {
     }
     const token = request.cookies.get('token')
     const decodeToken: any = token?.value ? jwt_decode(token.value) : null
-    const { id_jabatan } = decodeToken
+    const { id_jabatan, id_offpegawai } = decodeToken
     console.log(
       id_jabatan,
       request.nextUrl.pathname,
@@ -113,6 +121,9 @@ export function middleware(request: NextRequest) {
       isacc = true
       gagal = false
     } else if (urlFungsionalStaffASN.includes(request.nextUrl.pathname) && id_jabatan.toString() === '6') {
+      isacc = true
+      gagal = false
+    } else if (urlNonASN.includes(request.nextUrl.pathname) && id_jabatan.toString() === '10' && id_offpegawai.toString() === '62') {
       isacc = true
       gagal = false
     } else if (urlNonASN.includes(request.nextUrl.pathname) && id_jabatan.toString() === '10') {

@@ -42,6 +42,7 @@ export type NavGroup = {
   icon?: string
   title: string
   id_jabatan: string[]
+  id_offpegawai: string[]
   auth?: boolean
   action?: string
   subject?: string
@@ -55,6 +56,7 @@ export type NavLink = {
   path?: string
   title: string
   id_jabatan: string[]
+  id_offpegawai: string[]
   auth?: boolean
   action?: string
   subject?: string

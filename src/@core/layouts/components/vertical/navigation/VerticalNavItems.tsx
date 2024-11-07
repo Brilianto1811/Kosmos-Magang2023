@@ -38,15 +38,34 @@ const VerticalNavItems = (props: Props) => {
   const [filteredNavItems, setFilteredNavItems] = useState<any>([])
 
   useEffect(() => {
-    const decodedtoken = usedecodetoken()
+    const decodedtoken = usedecodetoken();
+    const non_asn = ['10', '11']
+    console.log(decodedtoken);
 
-    // Filter item-menu sesuai dengan id_jabatan
-    const filteredItems = verticalNavItems?.filter(
-      (item: any) => item.id_jabatan && item.id_jabatan.includes(decodedtoken?.id_jabatan)
-    )
+    // Filter item-menu sesuai dengan id_jabatan dan id_offpegawai
+    let filteredItems = verticalNavItems?.filter(
+      (item: any) =>
+        item.id_jabatan && item.id_jabatan.includes(decodedtoken?.id_jabatan)
+        &&
+        item.id_offpegawai && item.id_offpegawai.includes(decodedtoken?.id_offpegawai)
+    );
+    if (decodedtoken?.id_offpegawai.toString() != '62') {
+      filteredItems = verticalNavItems?.filter(
+        (item: any) =>
+          item.id_jabatan && item.id_jabatan.includes(decodedtoken?.id_jabatan) &&
+          item.id_offpegawai && item.id_offpegawai.includes("orang orangan sawah")
+      );
+      if (!non_asn.includes(decodedtoken?.id_jabatan.toString())) {
+        filteredItems = verticalNavItems?.filter(
+          (item: any) =>
+            item.id_jabatan && item.id_jabatan.includes(decodedtoken?.id_jabatan)
+        );
+      }
+    }
 
-    setFilteredNavItems(filteredItems)
-  }, [verticalNavItems]) // pastikan untuk menyertakan verticalNavItems dalam dependencies agar efek samping diterapkan saat berubah
+    setFilteredNavItems(filteredItems);
+  }, [verticalNavItems]);
+  // pastikan untuk menyertakan verticalNavItems dalam dependencies agar efek samping diterapkan saat berubah
 
   const RenderMenuItems = filteredNavItems.map((item: NavGroup | NavLink | NavSectionTitle, index: number) => {
     const TagName: any = resolveNavItemComponent(item)
