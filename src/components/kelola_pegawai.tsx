@@ -377,7 +377,7 @@ const TableKelolaPegawai = () => {
     const bodyFormData = new FormData()
 
     bodyFormData.append('id_offpegawai', id_offpegawai)
-    bodyFormData.append('nim_offpegawai', name_offpegawai)
+    bodyFormData.append('name_offpegawai', name_offpegawai)
     bodyFormData.append('alias_offpegawai', alias_offpegawai)
     bodyFormData.append('nip_offpegawai', nip_offpegawai)
     bodyFormData.append('id_golongan', id_golongan)
@@ -409,8 +409,8 @@ const TableKelolaPegawai = () => {
     setOpenEdit(false)
   }
 
-  const handleClickOpenDelete = (id_offkeg: any) => {
-    setDelete(id_offkeg)
+  const handleClickOpenDelete = (id_offpegawai: any) => {
+    setDelete(id_offpegawai)
     setOpenDelete(true)
   }
   const handleCloseDelete = () => {
@@ -642,70 +642,139 @@ const TableKelolaPegawai = () => {
           <DialogTitle
             style={{ textAlign: 'center', backgroundColor: '#FFA500', marginTop: '-15px', fontSize: '20px' }}
           >
-            Edit Rutinitas
+            Edit Data Pegawai
           </DialogTitle>
           <Divider style={{ margin: '10px 0', marginTop: '10px' }} />
           <DialogContent>
             {selectedData && (
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-15px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '10px' }}>
-                    <Typography variant='body1' style={{ marginRight: '10px' }}>
-                      Tanggal:
-                    </Typography>
-                    <DatePicker
-                      label='Masukkan Tanggal'
-                      value={selectedDate}
-                      onChange={date => setSelectedDate(date)}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '10px' }}>
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Waktu:
-                    </Typography>
-                    <TimePicker
-                      label='From'
-                      value={beforeselectedTime}
-                      onChange={time => setBeforeSelectedTime(time)}
-                      format='HH:mm'
-                    />
-                    <TimePicker
-                      label='To'
-                      value={afterselectedTime}
-                      onChange={time => setAfterSelectedTime(time)}
-                      format='HH:mm'
-                    />
-                  </div>
-                  {/* {JSON.stringify(mainInput)} */}
                   <div
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
                   >
                     <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Kegiatan:
+                      Nama Pegawai:
                     </Typography>
                     <CustomTextField
-                      placeholder='Masukkan Judul Kegiatan anda'
+                      placeholder='Masukkan Nama Pegawai'
                       fullWidth
-                      value={selectedData.cap_offkeg}
-                      onChange={e => setSelectedData({ ...selectedData, cap_offkeg: e.target.value })}
+                      value={selectedData.name_offpegawai}
+                      onChange={e => setSelectedData({ ...selectedData, name_offpegawai: e.target.value })}
                       style={{
                         width: '530px'
                       }}
                     />
                   </div>
                   <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
                   >
                     <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Keterangan:
+                      Alias Pegawai:
                     </Typography>
                     <CustomTextField
-                      placeholder='Masukkan Keterangan dari Kegiatan anda'
+                      placeholder='Masukkan Nama AliasPegawai'
                       fullWidth
-                      value={selectedData.note_offkeg}
-                      onChange={e => setSelectedData({ ...selectedData, note_offkeg: e.target.value })}
+                      value={selectedData.alias_offpegawai}
+                      onChange={e => setSelectedData({ ...selectedData, alias_offpegawai: e.target.value })}
                       style={{
                         width: '530px'
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                  >
+                    <Typography variant='body1' style={{ marginRight: '21px' }}>
+                      Nama Bidang:
+                    </Typography>
+                    <CustomTextField
+                      placeholder='Masukkan Nama Bidang'
+                      fullWidth
+                      value={selectedData.name_bidang}
+                      onChange={e => setSelectedData({ ...selectedData, name_bidang: e.target.value })}
+                      style={{
+                        width: '530px'
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                  >
+                    <Typography variant='body1' style={{ marginRight: '21px' }}>
+                      Nama Sub Bidang:
+                    </Typography>
+                    <CustomTextField
+                      placeholder='Masukkan Nama Sub Bidang'
+                      fullWidth
+                      value={selectedData.name_bidangsub}
+                      onChange={e => setSelectedData({ ...selectedData, name_bidangsub: e.target.value })}
+                      style={{
+                        width: '530px'
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                  >
+                    <Typography variant='body1' style={{ marginRight: '21px' }}>
+                      Nama Golongan:
+                    </Typography>
+                    <CustomTextField
+                      placeholder='Masukkan Nama Golongan'
+                      fullWidth
+                      value={selectedData.name_golongan}
+                      onChange={e => setSelectedData({ ...selectedData, name_golongan: e.target.value })}
+                      style={{
+                        width: '530px'
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                  >
+                    <Typography variant='body1' style={{ marginRight: '21px' }}>
+                      Nama Jabatan:
+                    </Typography>
+                    <CustomTextField
+                      placeholder='Masukkan Nama Jabatan'
+                      fullWidth
+                      value={selectedData.name_jabatan}
+                      onChange={e => setSelectedData({ ...selectedData, name_jabatan: e.target.value })}
+                      style={{
+                        width: '530px'
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                  >
+                    <Typography variant='body1' style={{ marginRight: '21px' }}>
+                      NIP:
+                    </Typography>
+                    <CustomTextField
+                      placeholder='Masukkan NIP'
+                      fullWidth
+                      value={selectedData.nip_offpegawai}
+                      onChange={e => setSelectedData({ ...selectedData, nip_offpegawai: e.target.value })}
+                      style={{
+                        width: '530px'
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                  >
+                    <Typography variant="body1" style={{ marginRight: '21px' }}>
+                      Password:
+                    </Typography>
+                    <CustomTextField
+                      placeholder="Masukkan Password"
+                      fullWidth
+                      type="password" // Tambahkan tipe password
+                      value={selectedData.str_pswd}
+                      onChange={(e) => setSelectedData({ ...selectedData, str_pswd: e.target.value })}
+                      style={{
+                        width: '530px',
                       }}
                     />
                   </div>
