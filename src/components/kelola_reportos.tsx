@@ -1,5 +1,5 @@
 // ** React Imports
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // ** MUI Imports
 import Card from '@mui/material/Card'
@@ -7,8 +7,8 @@ import CardHeader from '@mui/material/CardHeader'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 
 // ** Data Import
-import { DataMdRutinitas } from 'src/models/data-md-rutinitas'
-import { DeleteDataPostKeg, GetDataKegById, InsertDataPostKeg, UpdateDataPostKeg } from 'src/store/module-rutinitas'
+import { DataMdPegawai } from 'src/models/data-md-pegawai'
+import { GetPegawai, InsertPegawai, UpdateSuperadminPegawai, DeletePegawai } from 'src/store/module-pegawai'
 import React from 'react'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
@@ -18,59 +18,20 @@ import DialogActions from '@mui/material/DialogActions'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import Typography from '@mui/material/Typography'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import Box from '@mui/material/Box'
-import List from '@mui/material/List'
 import cloneDeep from 'clone-deep'
-import dayjs, { Dayjs } from 'dayjs'
-import { useDropzone } from 'react-dropzone'
-import ListItem from '@mui/material/ListItem'
-import IconButton from '@mui/material/IconButton'
 import usedecodetoken from 'src/utils/decodecookies'
-import { TimePicker } from '@mui/x-date-pickers/TimePicker'
 import { Icon } from '@iconify/react'
-import CustomChip from 'src/@core/components/mui/chip'
 import { Zoom, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { ThemeColor } from 'src/@core/layouts/types'
 import Divider from '@mui/material/Divider'
 import CustomTextField from 'src/@core/components/mui/text-field'
-import { baseURL } from 'src/utils/api'
-import { CircularProgress, Grid } from '@mui/material'
-
-interface FileProp {
-  name: string
-  type: string
-  size: number
-}
-
-interface UserStatusType {
-  [key: string]: ThemeColor
-}
+import { CircularProgress, FormControlLabel, Grid, Radio, RadioGroup, TextField } from '@mui/material'
 
 const TableKelolaReportos = () => {
-  const userStatusObj: UserStatusType = {
-    '0': 'warning', // Belum Diterima
-    '1': 'success', // Diterima
-    '2': 'error' // Sudah Selesai
-  }
 
   const notifysuccess = (msg: any) => {
     toast.success(msg, {
-      position: 'top-center',
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      transition: Zoom,
-      theme: 'light'
-    })
-  }
-
-  const notifywarning = (msg: any) => {
-    toast.warn(msg, {
       position: 'top-center',
       autoClose: 3000,
       hideProgressBar: false,
@@ -97,102 +58,121 @@ const TableKelolaReportos = () => {
     })
   }
 
-  const { getRootProps, getInputProps } = useDropzone({
-    maxFiles: 1,
-    maxSize: 2000000,
-    accept: {
-      '/*': ['.', '.']
-    },
-    onDrop: (acceptedFiles: File[]) => {
-      setFiles(acceptedFiles.map((file: File) => Object.assign(file)))
-    },
-    onDropRejected: () => {
-      notifywarning('You can only upload 1 files & maximum size of 2 MB.')
-    }
-  })
-
   const form = {
+    name_offpegawai: '',
     id_offpegawai: '',
-    id_offkeg: '',
-    tgl_offkeg: '',
-    jam_offkeg: '',
-    jam_offkeg2: '',
-    cap_offkeg: '',
-    note_offkeg: '',
-    namaFileFoto: '',
-    str_file: '',
-    fileFoto: null
+    alias_offpegawai: '',
+    nip_offpegawai: '',
+    id_golongan: '',
+    id_jabatan: '',
+    id_bidang: '',
+    id_bidangsub: '',
+    id_instansi: '',
+    str_pswd: '',
+    plt_bidang: '',
+    plt_bidangsub: '',
+    cc_112: '',
   }
   const [mainInput, setMainInput] = useState(cloneDeep(form))
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(new AdapterDayjs().date())
-  const [beforeselectedTime, setBeforeSelectedTime] = React.useState<Dayjs | null>(dayjs('2022-04-17T00:00'))
-  const [afterselectedTime, setAfterSelectedTime] = React.useState<Dayjs | null>(dayjs('2022-04-17T00:00'))
-  const [files, setFiles] = useState<File[]>([])
-  const [dataRutinitas, setDataRutinitas] = useState<any>()
+  const [dataPegawai, setDataPegawai] = useState<any>()
+  const [dataPegawaiFilter, setDataPegawaiFilter] = useState<any>()
   const [open, setOpen] = React.useState(false)
   const [openEdit, setOpenEdit] = React.useState(false)
   const [openDelete, setOpenDelete] = React.useState(false)
   const [Delete, setDelete] = useState<string>('') as [string, React.Dispatch<React.SetStateAction<string>>]
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const [selectedData, setSelectedData] = useState<any>(null)
-  const [openDialog, setOpenDialog] = useState(false)
-  const [currentImage, setCurrentImage] = useState('')
   const [dataLoaded, setDataLoaded] = useState<boolean>(false)
-  const selectedDate2 = useRef<Dayjs | null>(new AdapterDayjs().date())
   const [loading, setLoading] = useState<boolean>(false)
+  const [golonganOptions, setGolonganOptions] = useState<{ id_golongan: number; name_golongan: string; }[]>([]);
+  const [jabatanOptions, setJabatanOptions] = useState<{ id_jabatan: number; name_jabatan: string; }[]>([]);
+  const [bidangOptions, setBidangOptions] = useState<{ id_bidang: number; name_bidang: string; }[]>([]);
+  const [bidangsubOptions, setBidangsubOptions] = useState<{ id_bidangsub: number; name_bidangsub: string; }[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filteredData, setFilteredData] = useState<any[]>([]);
 
-  const handleDateChange = async (date: Dayjs | null) => {
-    setLoading(true) // Set loading to true when starting to fetch data
-    selectedDate2.current = date
-    await fetchData(() => getDataRutinitas(date))
-  }
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    console.log(value);
+    filterData()
+  };
 
-  const fetchData = async (getDataFunction: () => Promise<void>) => {
-    try {
-      // Execute the data retrieval function
-      await getDataFunction()
-    } finally {
-      // Set loading to false after a delay of 3 seconds
-      setTimeout(() => {
-        setLoading(false)
-        setDataLoaded(true)
-      }, 700)
+  // Fungsi untuk memfilter data pegawai berdasarkan kata kunci pencarian
+  const filterData = () => {
+    if (!searchTerm) {
+      setFilteredData(dataPegawai); // Jika tidak ada pencarian, tampilkan semua data
+    } else {
+      setFilteredData(
+        dataPegawaiFilter.filter((pegawai: any) => {
+          // Misalnya kita mencari berdasarkan nama pegawai
+          return (
+            pegawai.name_offpegawai.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            pegawai.alias_offpegawai.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            pegawai.name_bidang.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            pegawai.name_bidangsub.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+        })
+      );
+      setDataPegawai(filteredData);
     }
-  }
+  };
 
   useEffect(() => {
     // Function to get data
     const fetchData = async () => {
       setLoading(true);
       try {
-        await getDataRutinitas(selectedDate2.current);
+        const data = await getDataPegawai();
+        const uniqueGolongan = Array.from(
+          new Map(data?.map((item) => [item.id_golongan, {
+            id_golongan: item.id_golongan,
+            name_golongan: item.name_golongan
+          }]) ?? []).values()
+        );
+        const uniqueJabatan = Array.from(
+          new Map(data?.map((item) => [item.id_jabatan, {
+            id_jabatan: item.id_jabatan,
+            name_jabatan: item.name_jabatan
+          }]) ?? []).values()
+        );
+        const uniqueBidang = Array.from(
+          new Map(data?.map((item) => [item.id_bidang, {
+            id_bidang: item.id_bidang,
+            name_bidang: item.name_bidang
+          }]) ?? []).values()
+        );
+        const uniqueBidangSub = Array.from(
+          new Map(data?.map((item) => [item.id_bidangsub, {
+            id_bidangsub: item.id_bidangsub,
+            name_bidangsub: item.name_bidangsub
+          }]) ?? []).values()
+        );
+        // console.log('golongan', data[0]);
+        setGolonganOptions(uniqueGolongan);
+        setJabatanOptions(uniqueJabatan);
+        setBidangOptions(uniqueBidang);
+        setBidangsubOptions(uniqueBidangSub);
+        console.log(data, 'ini datanyaa');
       } finally {
         // Set loading to false after a delay of 3 seconds
         setTimeout(() => {
           setLoading(false);
           setDataLoaded(true);
+          // const data = dataPegawai;
         }, 700);
       }
     };
 
     // Fetch data when component mounts
-    fetchData();
+    fetchData(), filterData();
   }, []);
 
-  const handleAvatarClick = (imageUrl: any) => {
-    setCurrentImage(imageUrl)
-    setOpenDialog(true)
-  }
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
-  }
-
-  const handleDeleteClick = (id_offkeg: string) => {
-    DeleteDataPostKeg(id_offkeg)
+  const handleDeleteClick = (id_offpegawai: string) => {
+    DeletePegawai(id_offpegawai)
       .then(response => {
         notifysuccess(response.pesan)
-        getDataRutinitas(selectedDate2.current)
+        getDataPegawai()
         handleCloseDelete()
       })
       .catch(error => {
@@ -209,266 +189,184 @@ const TableKelolaReportos = () => {
       flex: 0.2,
       minWidth: 125,
       renderCell(params) {
-        const row: DataMdRutinitas = params.row
-
-        if (row.code_assign === 0 || row.code_assign === 2) {
-          return (
-            <>
-              <Button
-                onClick={() => {
-                  setOpenEdit(true)
-                  console.log('data edit', row)
-
-                  // Parse the string into a Dayjs instance
-                  const tglOffkegDate = dayjs(row.tgl_offkeg)
-                  const jamOffkegTime = dayjs(row.jam_offkeg, 'HH:mm')
-                  const jamOffkegTime2 = dayjs(row.jam_offkeg2, 'HH:mm')
-
-                  if (tglOffkegDate.isValid()) {
-                    setSelectedDate(tglOffkegDate)
-                  } else {
-                    console.error('Invalid date format:', row.tgl_offkeg)
-                  }
-
-                  if (jamOffkegTime.isValid()) {
-                    setBeforeSelectedTime(jamOffkegTime)
-                  } else {
-                    console.error('Invalid time format:', row.jam_offkeg)
-                  }
-
-                  if (jamOffkegTime2.isValid()) {
-                    setAfterSelectedTime(jamOffkegTime2)
-                  } else {
-                    console.error('Invalid time format:', row.jam_offkeg2)
-                  }
-
-                  setSelectedData(row)
-                }}
-              >
-                <Icon icon='mingcute:pencil-line' color='#FFA500' width='25' height='25' />
-              </Button>
-              <Button onClick={() => handleClickOpenDelete(row.id_offkeg)}>
-                <Icon icon='solar:trash-bin-minimalistic-linear' color='#e3242b' width='25' height='25' hFlip={true} />
-              </Button>
-            </>
-          )
-        } else if (row.code_assign === 1) {
-          // Return null or an empty fragment if code_assign is 1
-          return <></>
-        }
-      }
-    },
-    {
-      field: 'code_assign',
-      align: 'center',
-      headerAlign: 'center',
-      headerName: 'Status',
-      flex: 0.2,
-      minWidth: 165,
-      renderCell(params) {
-        const row: DataMdRutinitas = params.row
-        const color = userStatusObj[row.code_assign.toString()] // Convert code_assign to string and access the corresponding color from userStatusObj
-        const statusTitle = {
-          '0': 'BELUM DITERIMA',
-          '1': 'DISETUJUI',
-          '2': 'DITOLAK'
-        }[row.code_assign.toString()] // Map code_assign to the corresponding status title
+        const row: DataMdPegawai = params.row
 
         return (
-          <CustomChip
-            rounded
-            skin='light'
-            size='small'
-            label={statusTitle}
-            color={color}
-            sx={{ textTransform: 'capitalize' }}
-          />
-        )
-      }
-    },
-    {
-      field: 'tgl_offkeg',
-      align: 'center',
-      headerAlign: 'center',
-      headerName: 'Tanggal',
-      flex: 0.2,
-      minWidth: 125
-    },
-    {
-      field: 'cap_offkeg',
-      align: 'left',
-      headerAlign: 'center',
-      headerName: 'Kegiatan',
-      flex: 0.2,
-      minWidth: 150
-    },
-    {
-      field: 'note_offkeg',
-      align: 'left',
-      headerAlign: 'center',
-      headerName: 'Keterangan',
-      flex: 0.2,
-      minWidth: 250
-    },
-    {
-      field: 'str_file',
-      align: 'center',
-      headerAlign: 'center',
-      headerName: 'Foto Kegiatan',
-      flex: 0.2,
-      minWidth: 250,
-      renderCell(params) {
-        const row: DataMdRutinitas = params.row
-        const imageUrl =
-          row.str_file && row.str_file.length > 0
-            ? `${baseURL}/detailkeg/:?file=${row.str_file}`
-            : '/images/diskominfo/user2.png'
+          <>
+            <Button
+              onClick={async () => {
+                setOpenEdit(true);
+                console.log('data edit', row);
 
-        return (
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <img
-              src={imageUrl}
-              alt={row.str_file}
-              style={{
-                width: '80px',
-                height: '40px',
-                cursor: 'pointer',
-                marginRight: '10px',
-                borderRadius: '5%',
-                border: '1px solid grey',
-                objectFit: 'cover'
+                // Jika row adalah objek
+                if (Array.isArray(row)) {
+                  const editData = row.map((val: { id_offpegawai: any; str_pswd?: string }) => ({
+                    ...val,
+                    str_pswd: '', // Setel str_pswd menjadi string kosong
+                  }));
+                  setSelectedData(editData);
+                } else {
+                  const editData = { ...row, str_pswd: '' }; // Jika row adalah objek tunggal
+                  setSelectedData(editData);
+                }
+
+                console.log('Updated selectedData:', selectedData);
               }}
-              onClick={() => handleAvatarClick(imageUrl)}
-            />
-          </div>
+
+            >
+              <Icon icon='mingcute:pencil-line' color='#FFA500' width='25' height='25' />
+            </Button>
+            <Button onClick={() => handleClickOpenDelete(row.id_offpegawai)}>
+              <Icon icon='solar:trash-bin-minimalistic-linear' color='#e3242b' width='25' height='25' hFlip={true} />
+            </Button>
+          </>
         )
       }
     },
     {
-      field: 'jam_offkeg',
-      align: 'center',
+      field: 'name_offpegawai',
+      align: 'left',
       headerAlign: 'center',
-      headerName: 'Waktu Mulai',
+      headerName: 'Nama Pegawai',
       flex: 0.2,
-      minWidth: 135
+      minWidth: 280
     },
     {
-      field: 'jam_offkeg2',
-      align: 'center',
+      field: 'alias_offpegawai',
+      align: 'left',
       headerAlign: 'center',
-      headerName: 'Waktu Selesai',
+      headerName: 'Nama Alias',
       flex: 0.2,
-      minWidth: 155
+      minWidth: 190
+    },
+    {
+      field: 'name_bidang',
+      align: 'left',
+      headerAlign: 'center',
+      headerName: 'Nama Bidang',
+      flex: 0.2,
+      minWidth: 320
+    },
+    {
+      field: 'name_bidangsub',
+      align: 'left',
+      headerAlign: 'center',
+      headerName: 'Nama Sub Bidang',
+      flex: 0.2,
+      minWidth: 435
+    },
+    {
+      field: 'name_golongan',
+      align: 'left',
+      headerAlign: 'center',
+      headerName: 'Nama Golongan',
+      flex: 0.2,
+      minWidth: 200
+    },
+    {
+      field: 'name_jabatan',
+      align: 'left',
+      headerAlign: 'center',
+      headerName: 'Nama Jabatan',
+      flex: 0.2,
+      minWidth: 200
+    },
+    {
+      field: 'nip_offpegawai',
+      align: 'left',
+      headerAlign: 'center',
+      headerName: 'NIP',
+      flex: 0.2,
+      minWidth: 195
     }
   ]
 
-  const handleUpload = async () => {
-    const decodedtoken = usedecodetoken()
-
-    const bodyFormData = new FormData()
-    bodyFormData.append('id_offpegawai', decodedtoken?.id_offpegawai)
-    bodyFormData.append('tgl_offkeg', selectedDate ? selectedDate.format('YYYY-MM-DD') : '')
-    bodyFormData.append('jam_offkeg', beforeselectedTime ? beforeselectedTime.format('HH:mm:ss') : '')
-    bodyFormData.append('jam_offkeg2', afterselectedTime ? afterselectedTime.format('HH:mm:ss') : '')
-    bodyFormData.append('cap_offkeg', mainInput.cap_offkeg)
-    bodyFormData.append('note_offkeg', mainInput.note_offkeg)
-
-    // Tambahkan file jika ada
-    if (files.length > 0) {
-      files.forEach(file => {
-        bodyFormData.append(`str_file`, file)
-      })
-    }
-    try {
-      const response = await InsertDataPostKeg(bodyFormData)
-
-      if (response.error === true) {
-        notifyerror(response.pesan)
-      } else {
-        handleClose()
-        notifysuccess(response.pesan)
-        getDataRutinitas(selectedDate2.current)
-        setMainInput(cloneDeep(form))
-        setSelectedDate(new AdapterDayjs().date())
-        setFiles([])
-      }
-    } catch (error: any) {
-      console.error('Terjadi kesalahan:', error.pesan)
-    }
+  function getCurrentYearAsString() {
+    return new Date().getFullYear().toString();
   }
 
+
+  const handleUpload = async () => {
+    const decodedtoken = usedecodetoken();
+    const currentYear = await getCurrentYearAsString();
+
+    const bodyFormData = new FormData();
+    bodyFormData.append('id_offpegawai', decodedtoken?.id_offpegawai || '');
+    bodyFormData.append('name_offpegawai', mainInput.name_offpegawai);
+    bodyFormData.append('alias_offpegawai', mainInput.alias_offpegawai);
+    bodyFormData.append('nip_offpegawai', mainInput.nip_offpegawai);
+    bodyFormData.append('id_golongan', mainInput.id_golongan);
+    bodyFormData.append('id_jabatan', mainInput.id_jabatan);
+    bodyFormData.append('id_bidang', mainInput.id_bidang);
+    bodyFormData.append('id_bidangsub', mainInput.id_bidangsub);
+    bodyFormData.append('id_instansi', '1');
+    bodyFormData.append('str_pswd', 'newkosmos' + currentYear);
+    bodyFormData.append('plt_bidang', '0');
+    bodyFormData.append('plt_bidangsub', '0');
+    bodyFormData.append('cc_112', '0');
+
+    try {
+      const response = await InsertPegawai(bodyFormData);
+
+      if (response.error === true) {
+        notifyerror(response.pesan);
+      } else {
+        handleClose();
+        notifysuccess(response.pesan);
+        getDataPegawai();
+        setMainInput(cloneDeep(form));
+      }
+    } catch (error: any) {
+      console.error('Terjadi kesalahan:', error.message);
+    }
+  };
+
+
   const handleUpdate = async () => {
-    const decodedtoken = usedecodetoken()
     if (!selectedData) return
 
-    const id_offpegawai = decodedtoken?.id_offpegawai
-    const { id_offkeg } = selectedData
-    const tgl_offkeg = selectedDate ? selectedDate.format('YYYY-MM-DD') : ''
-    const jam_offkeg = beforeselectedTime ? beforeselectedTime.format('HH:mm:ss') : ''
-    const jam_offkeg2 = afterselectedTime ? afterselectedTime.format('HH:mm:ss') : ''
-    const { cap_offkeg } = selectedData
-    const { note_offkeg } = selectedData
+    const { id_offpegawai } = selectedData
+    const { name_offpegawai } = selectedData
+    const { alias_offpegawai } = selectedData
+    const { nip_offpegawai } = selectedData
+    const { id_golongan } = selectedData
+    const { id_jabatan } = selectedData
+    const { id_bidang } = selectedData
+    const { id_bidangsub } = selectedData
+    const { str_pswd } = selectedData
+    const { plt_bidang } = selectedData
+    const { plt_bidangsub } = selectedData
+    const { cc_112 } = selectedData
 
     const bodyFormData = new FormData()
 
     bodyFormData.append('id_offpegawai', id_offpegawai)
-    bodyFormData.append('id_offkeg', id_offkeg)
-    bodyFormData.append('tgl_offkeg', tgl_offkeg)
-    bodyFormData.append('jam_offkeg', jam_offkeg)
-    bodyFormData.append('jam_offkeg2', jam_offkeg2)
-    bodyFormData.append('cap_offkeg', cap_offkeg)
-    bodyFormData.append('note_offkeg', note_offkeg)
-    if (files.length > 0) {
-      files.forEach(file => {
-        bodyFormData.append(`str_file`, file)
-      })
-    }
+    bodyFormData.append('name_offpegawai', name_offpegawai)
+    bodyFormData.append('alias_offpegawai', alias_offpegawai)
+    bodyFormData.append('nip_offpegawai', nip_offpegawai)
+    bodyFormData.append('id_golongan', id_golongan)
+    bodyFormData.append('id_jabatan', id_jabatan)
+    bodyFormData.append('id_bidang', id_bidang)
+    bodyFormData.append('id_bidangsub', id_bidangsub)
+    bodyFormData.append('str_pswd', str_pswd ?? '')
+    bodyFormData.append('plt_bidang', plt_bidang)
+    bodyFormData.append('plt_bidangsub', plt_bidangsub)
+    bodyFormData.append('cc_112', cc_112)
 
     try {
-      const response = await UpdateDataPostKeg(bodyFormData)
-      handleCloseEdit()
-      notifysuccess(response.pesan)
-      getDataRutinitas(selectedDate2.current)
-    } catch (ex: any) {
-      // notifyerror(ex.response.data.pesan)
-      // Handle the error
-      // console.error(ex)
+      const response = await UpdateSuperadminPegawai(bodyFormData);
+
+      if (response.error === true) {
+        notifyerror(response.pesan);
+      } else {
+        handleCloseEdit();
+        notifysuccess(response.pesan);
+        getDataPegawai();
+      }
+    } catch (error: any) {
+      console.error('Terjadi kesalahan:', error.message);
     }
   }
-
-  const renderFilePreview = (file: FileProp) => {
-    if (file.type.startsWith('image')) {
-      return <img width={38} height={38} alt={file.name} src={URL.createObjectURL(file as any)} />
-    } else {
-      return <Icon icon='fa6-regular:file-lines' width='50' height='50' />
-    }
-  }
-
-  const handleRemoveFile = (file: FileProp) => {
-    const uploadedFiles = files
-    const filtered = uploadedFiles.filter((i: FileProp) => i.name !== file.name)
-    setFiles([...filtered])
-  }
-
-  const fileList = files.map((file: FileProp) => (
-    <ListItem key={file.name}>
-      <div className='file-details'>
-        <div className='file-preview'>{renderFilePreview(file)}</div>
-        <div>
-          <Typography className='file-name'>{file.name}</Typography>
-          <Typography className='file-size' variant='body2'>
-            {Math.round(file.size / 100) / 10 > 1000
-              ? (Math.round(file.size / 100) / 10000).toFixed(1) + ' MB'
-              : (Math.round(file.size / 100) / 10).toFixed(1) + ' kb'}
-          </Typography>
-        </div>
-      </div>
-      <IconButton onClick={() => handleRemoveFile(file)}>
-        {/* <Icon icon='tabler:x' fontSize={20} /> */}
-        <Icon icon='ph:x-circle-light' width='30' height='30' />
-      </IconButton>
-    </ListItem>
-  ))
 
   const handleClose = () => {
     setOpen(false)
@@ -478,26 +376,26 @@ const TableKelolaReportos = () => {
     setOpenEdit(false)
   }
 
-  const handleClickOpenDelete = (id_offkeg: any) => {
-    setDelete(id_offkeg)
+  const handleClickOpenDelete = (id_offpegawai: any) => {
+    setDelete(id_offpegawai)
     setOpenDelete(true)
   }
   const handleCloseDelete = () => {
     setOpenDelete(false)
   }
 
-  const getDataRutinitas = async (selectedDate: any) => {
+  const getDataPegawai = async () => {
     try {
-      const decodedtoken = usedecodetoken()
-      const responseData = await GetDataKegById(
-        decodedtoken?.id_offpegawai,
-        selectedDate ? selectedDate.format('YYYY-MM') : ''
+      const responseData = await GetPegawai(
       )
       if (responseData && responseData.data) {
-        const tmpData = responseData.data.map(val => ({ ...val, id: val.id_offkeg }))
-        setDataRutinitas(tmpData)
+        const tmpData = responseData.data.map(val => ({ ...val, id: val.id_offpegawai }))
+        setDataPegawai(tmpData)
+        setDataPegawaiFilter(tmpData)
+        console.log('data dari database', dataPegawai)
+        return tmpData
       } else {
-        setDataRutinitas(null)
+        setDataPegawai(null)
       }
     } catch (error) {
       console.error(error)
@@ -505,7 +403,7 @@ const TableKelolaReportos = () => {
   }
 
   useEffect(() => {
-    getDataRutinitas(selectedDate2.current), setSelectedDate(new AdapterDayjs().date())
+    getDataPegawai()
   }, [])
 
   return (
@@ -516,7 +414,7 @@ const TableKelolaReportos = () => {
             <>
               <span style={{ color: 'black' }}>Superadmin</span> <br />
               <span style={{ fontSize: '0.875rem', marginTop: '5px', color: '#555' }}>
-                Kelola Laporan Kinerja
+                Kelola Data Laporan Kinerja
               </span>
             </>
           }
@@ -524,71 +422,52 @@ const TableKelolaReportos = () => {
         />
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+        <TextField
+          label="Cari Laporan Kinerja"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          style={{ marginRight: '10px' }}
+        />
         <Button
           variant='outlined'
           onClick={() => {
             setOpen(true)
-            setSelectedDate(new AdapterDayjs().date())
-            const currentTime = dayjs()
-
-            setBeforeSelectedTime(currentTime)
-            setAfterSelectedTime(currentTime)
           }}
           sx={{
             backgroundColor: '#50C878',
             color: 'black',
+            marginBottom: '10px',
             borderColor: '#03C04A',
             '&:hover': {
               color: 'black' // Warna teks saat tombol dihover
             }
           }}
         >
-          Tambah Laporan Kinerja
+          Tambah Data Laporan Kinerja
         </Button>
         <Dialog open={open} onClose={handleClose}>
           <DialogTitle
             style={{ textAlign: 'center', backgroundColor: '#50C878', marginTop: '-15px', fontSize: '20px' }}
           >
-            Tambah Rutinitas
+            Tambah Data Laporan Kinerja
           </DialogTitle>
           <Divider style={{ margin: '10px 0', marginTop: '10px' }} />
           <DialogContent>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-15px' }}>
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '10px' }}>
-                  <Typography variant='body1' style={{ marginRight: '10px' }}>
-                    Tanggal:
-                  </Typography>
-                  <DatePicker label='Masukkan Tanggal' value={selectedDate} onChange={date => setSelectedDate(date)} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '10px' }}>
-                  <Typography variant='body1' style={{ marginRight: '21px' }}>
-                    Waktu:
-                  </Typography>
-                  <TimePicker
-                    label='From'
-                    value={beforeselectedTime}
-                    onChange={time => setBeforeSelectedTime(time)}
-                    format='HH:mm' // Format 24 jam
-                  />
-                  <TimePicker
-                    label='To'
-                    value={afterselectedTime}
-                    onChange={time => setAfterSelectedTime(time)}
-                    format='HH:mm' // Format 24 jam
-                  />
-                </div>
                 <div
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
                 >
                   <Typography variant='body1' style={{ marginRight: '21px' }}>
-                    Kegiatan:
+                    Nama Pegawai:
                   </Typography>
                   <CustomTextField
-                    placeholder='Masukkan Judul Kegiatan Anda'
+                    placeholder='Masukkan Nama Lengkap'
                     fullWidth
-                    value={mainInput.cap_offkeg}
-                    onChange={$event => setMainInput({ ...mainInput, cap_offkeg: $event.target.value })}
+                    value={mainInput.name_offpegawai}
+                    onChange={$event => setMainInput({ ...mainInput, name_offpegawai: $event.target.value })}
                     style={{
                       width: '530px'
                     }}
@@ -598,74 +477,102 @@ const TableKelolaReportos = () => {
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}
                 >
                   <Typography variant='body1' style={{ marginRight: '21px' }}>
-                    Keterangan:
+                    Nama Alias:
                   </Typography>
                   <CustomTextField
-                    placeholder='Masukkan Keterangan dari Kegiatan anda'
+                    placeholder='Masukkan Nama Alias'
                     fullWidth
-                    value={mainInput.note_offkeg}
-                    onChange={$event => setMainInput({ ...mainInput, note_offkeg: $event.target.value })}
+                    value={mainInput.alias_offpegawai}
+                    onChange={$event => setMainInput({ ...mainInput, alias_offpegawai: $event.target.value })}
                     style={{
                       width: '530px'
                     }}
                   />
                 </div>
                 <div
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}
                 >
                   <Typography variant='body1' style={{ marginRight: '21px' }}>
-                    Upload Foto:
+                    NIP:
                   </Typography>
+                  <CustomTextField
+                    placeholder='Masukkan NIP'
+                    fullWidth
+                    value={mainInput.nip_offpegawai}
+                    onChange={$event => setMainInput({ ...mainInput, nip_offpegawai: $event.target.value })}
+                    style={{
+                      width: '530px'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}>
+                  <Typography variant='body1' style={{ marginBottom: '10px' }}>
+                    Nama Golongan:
+                  </Typography>
+                  <RadioGroup
+                    aria-label='golongan'
+                    name='golongan'
+                    value={mainInput.id_golongan}
+                    onChange={e => setMainInput({ ...mainInput, id_golongan: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {golonganOptions.map(golongan => (
+                      <FormControlLabel key={golongan.id_golongan} value={golongan.id_golongan} control={<Radio />} label={golongan.name_golongan} />
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}>
+                  <Typography variant='body1' style={{ marginBottom: '10px' }}>
+                    Nama Jabatan:
+                  </Typography>
+                  <RadioGroup
+                    aria-label='jabatan'
+                    name='jabatan'
+                    value={mainInput.id_jabatan}
+                    onChange={e => setMainInput({ ...mainInput, id_jabatan: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {jabatanOptions.map(jabatan => (
+                      <FormControlLabel key={jabatan.id_jabatan} value={jabatan.id_jabatan} control={<Radio />} label={jabatan.name_jabatan} />
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}>
+                  <Typography variant='body1' style={{ marginBottom: '10px' }}>
+                    Nama Bidang:
+                  </Typography>
+                  <RadioGroup
+                    aria-label='bidang'
+                    name='bidang'
+                    value={mainInput.id_bidang}
+                    onChange={e => setMainInput({ ...mainInput, id_bidang: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {bidangOptions.map(bidang => (
+                      <FormControlLabel key={bidang.id_bidang} value={bidang.id_bidang} control={<Radio />} label={bidang.name_bidang} />
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}>
+                  <Typography variant='body1' style={{ marginBottom: '10px' }}>
+                    Nama Sub Bidang:
+                  </Typography>
+                  <RadioGroup
+                    aria-label='sub_bidang'
+                    name='sub_bidang'
+                    value={mainInput.id_bidangsub}
+                    onChange={e => setMainInput({ ...mainInput, id_bidangsub: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {bidangsubOptions.map(subBidang => (
+                      <FormControlLabel key={subBidang.id_bidangsub} value={subBidang.id_bidangsub} control={<Radio />} label={subBidang.name_bidangsub} />
+                    ))}
+                  </RadioGroup>
                 </div>
               </div>
-              <Fragment>
-                <div {...getRootProps({ className: 'dropzone' })}>
-                  <input
-                    value={mainInput.namaFileFoto}
-                    onChange={$event => setMainInput({ ...mainInput, namaFileFoto: $event.target.value })}
-                    {...getInputProps()}
-                  />
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      textAlign: 'center',
-                      alignItems: 'center',
-                      width: '530px',
-                      flexDirection: 'column',
-                      paddingTop: '20px',
-                      paddingBottom: '20px',
-                      borderRadius: '10px',
-                      border: '2px dashed rgba(0, 0, 0, 0.29)'
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        mb: 8.75,
-                        width: 48,
-                        height: 48,
-                        display: 'flex',
-                        borderRadius: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: theme => `rgba(${theme.palette.customColors.main}, 0.08)`
-                      }}
-                    >
-                      <Icon icon='tabler:upload' fontSize='1.75rem' />
-                    </Box>
-                    <Typography variant='h4' sx={{ mb: 2.5 }}>
-                      Drop files here or click to upload.
-                    </Typography>
-                    <Typography sx={{ color: 'text.secondary' }}>Allowed *.jpeg, *.jpg, *.png, *.gif</Typography>
-                    <Typography sx={{ color: 'text.secondary' }}>Max 1 files and max size of 2 MB</Typography>
-                  </Box>
-                </div>
-                {files.length ? (
-                  <Fragment>
-                    <List>{fileList}</List>
-                    <div className='buttons'></div>
-                  </Fragment>
-                ) : null}
-              </Fragment>
             </LocalizationProvider>
           </DialogContent>
           <DialogActions>
@@ -677,130 +584,170 @@ const TableKelolaReportos = () => {
           <DialogTitle
             style={{ textAlign: 'center', backgroundColor: '#FFA500', marginTop: '-15px', fontSize: '20px' }}
           >
-            Edit Rutinitas
+            Edit Data Pegawai
           </DialogTitle>
           <Divider style={{ margin: '10px 0', marginTop: '10px' }} />
           <DialogContent>
             {selectedData && (
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-15px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '10px' }}>
-                    <Typography variant='body1' style={{ marginRight: '10px' }}>
-                      Tanggal:
-                    </Typography>
-                    <DatePicker
-                      label='Masukkan Tanggal'
-                      value={selectedDate}
-                      onChange={date => setSelectedDate(date)}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '10px' }}>
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Waktu:
-                    </Typography>
-                    <TimePicker
-                      label='From'
-                      value={beforeselectedTime}
-                      onChange={time => setBeforeSelectedTime(time)}
-                      format='HH:mm'
-                    />
-                    <TimePicker
-                      label='To'
-                      value={afterselectedTime}
-                      onChange={time => setAfterSelectedTime(time)}
-                      format='HH:mm'
-                    />
-                  </div>
-                  {/* {JSON.stringify(mainInput)} */}
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Kegiatan:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan Judul Kegiatan anda'
-                      fullWidth
-                      value={selectedData.cap_offkeg}
-                      onChange={e => setSelectedData({ ...selectedData, cap_offkeg: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Keterangan:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan Keterangan dari Kegiatan anda'
-                      fullWidth
-                      value={selectedData.note_offkeg}
-                      onChange={e => setSelectedData({ ...selectedData, note_offkeg: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Upload Foto:
-                    </Typography>
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-15px' }}>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Pegawai:
+                  </Typography>
+                  <CustomTextField
+                    placeholder='Masukkan Nama Pegawai'
+                    fullWidth
+                    value={selectedData.name_offpegawai}
+                    onChange={e => setSelectedData({ ...selectedData, name_offpegawai: e.target.value })}
+                    style={{
+                      width: '530px'
+                    }}
+                  />
                 </div>
-                <Fragment>
-                  <div {...getRootProps({ className: 'dropzone' })}>
-                    <input
-                      value={selectedData.namaFileFoto}
-                      onChange={e => setSelectedData({ ...selectedData, namaFileFoto: e.target.value })}
-                      {...getInputProps()}
-                    />
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        textAlign: 'center',
-                        alignItems: 'center',
-                        width: '530px',
-                        flexDirection: 'column',
-                        paddingTop: '20px',
-                        paddingBottom: '20px',
-                        borderRadius: '10px',
-                        border: '2px dashed rgba(0, 0, 0, 0.29)'
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          mb: 8.75,
-                          width: 48,
-                          height: 48,
-                          display: 'flex',
-                          borderRadius: 1,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: theme => `rgba(${theme.palette.customColors.main}, 0.08)`
-                        }}
-                      >
-                        <Icon icon='tabler:upload' fontSize='1.75rem' />
-                      </Box>
-                      <Typography variant='h4' sx={{ mb: 2.5 }}>
-                        Drop files here or click to upload.
-                      </Typography>
-                      <Typography sx={{ color: 'text.secondary' }}>Allowed *.jpeg, *.jpg, *.png, *.gif</Typography>
-                      <Typography sx={{ color: 'text.secondary' }}>Max 1 files and max size of 2 MB</Typography>
-                    </Box>
-                  </div>
-                  {files.length ? (
-                    <Fragment>
-                      <List>{fileList}</List>
-                      <div className='buttons'></div>
-                    </Fragment>
-                  ) : null}
-                </Fragment>
-              </LocalizationProvider>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Alias Pegawai:
+                  </Typography>
+                  <CustomTextField
+                    placeholder='Masukkan Nama AliasPegawai'
+                    fullWidth
+                    value={selectedData.alias_offpegawai}
+                    onChange={e => setSelectedData({ ...selectedData, alias_offpegawai: e.target.value })}
+                    style={{
+                      width: '530px'
+                    }}
+                  />
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Bidang:
+                  </Typography>
+                  <RadioGroup
+                    aria-label="bidang"
+                    name="bidang"
+                    value={selectedData.name_bidang || ''} // Gunakan name_bidang dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, name_bidang: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {bidangOptions.map((bidang) => (
+                      <FormControlLabel
+                        key={bidang.id_bidang}
+                        value={bidang.name_bidang} // Menyimpan name_bidang sebagai value
+                        control={<Radio />}
+                        label={bidang.name_bidang} // Menampilkan nama bidang sebagai label
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Sub Bidang:
+                  </Typography>
+                  <RadioGroup
+                    aria-label="bidang sub"
+                    name="bidang sub"
+                    value={selectedData.name_bidangsub || ''} // Gunakan name_bidangsub dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, name_bidangsub: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {bidangsubOptions.map((bidangsub) => (
+                      <FormControlLabel
+                        key={bidangsub.id_bidangsub}
+                        value={bidangsub.name_bidangsub} // Menyimpan name_bidangsub sebagai value
+                        control={<Radio />}
+                        label={bidangsub.name_bidangsub} // Menampilkan nama bidang sebagai label
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Golongan:
+                  </Typography>
+                  <RadioGroup
+                    aria-label="golongan"
+                    name="golongan"
+                    value={selectedData.name_golongan || ''} // Gunakan name_golongan dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, name_golongan: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {golonganOptions.map((golongan) => (
+                      <FormControlLabel
+                        key={golongan.id_golongan}
+                        value={golongan.name_golongan} // Menyimpan name_golongan sebagai value
+                        control={<Radio />}
+                        label={golongan.name_golongan} // Menampilkan nama bidang sebagai label
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Jabatan:
+                  </Typography>
+                  <RadioGroup
+                    aria-label="jabatan"
+                    name="jabatan"
+                    value={selectedData.name_jabatan || ''} // Gunakan name_jabatan dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, name_jabatan: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {jabatanOptions.map((jabatan) => (
+                      <FormControlLabel
+                        key={jabatan.id_jabatan}
+                        value={jabatan.name_jabatan} // Menyimpan name_jabatan sebagai value
+                        control={<Radio />}
+                        label={jabatan.name_jabatan} // Menampilkan nama bidang sebagai label
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    NIP:
+                  </Typography>
+                  <CustomTextField
+                    placeholder='Masukkan NIP'
+                    fullWidth
+                    value={selectedData.nip_offpegawai}
+                    onChange={e => setSelectedData({ ...selectedData, nip_offpegawai: e.target.value })}
+                    style={{
+                      width: '530px'
+                    }}
+                  />
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant="body1" style={{ marginRight: '21px' }}>
+                    Password:
+                  </Typography>
+                  <CustomTextField
+                    placeholder="Masukkan Password"
+                    fullWidth
+                    type="password" // Tambahkan tipe password
+                    // value={selectedData.str_pswd}
+                    onChange={(e) => setSelectedData({ ...selectedData, str_pswd: e.target.value })}
+                    style={{
+                      width: '530px',
+                    }}
+                  />
+                </div>
+              </div>
             )}
           </DialogContent>
           <DialogActions>
@@ -820,23 +767,6 @@ const TableKelolaReportos = () => {
             <Button onClick={() => handleDeleteClick(Delete)}>Delete</Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={openDialog} onClose={handleCloseDialog}>
-          <DialogTitle style={{ textAlign: 'center' }}>DETAIL FOTO</DialogTitle>
-          <DialogContent>
-            <img src={currentImage} alt='Dialog' style={{ width: '100%' }} />
-          </DialogContent>
-        </Dialog>
-      </div>
-      <div style={{ marginTop: '20px', marginBottom: '20px', marginLeft: '5px' }}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label='Pilih Bulan dan Tahun'
-            value={selectedDate2.current}
-            onChange={date => handleDateChange(date as Dayjs | null)}
-            views={['year', 'month']}
-            format='YYYY-MM'
-          />
-        </LocalizationProvider>
       </div>
       {loading && (
         <div
@@ -851,7 +781,7 @@ const TableKelolaReportos = () => {
           <p>Loading...</p>
         </div>
       )}
-      {dataLoaded && dataRutinitas ? (
+      {dataLoaded && dataPegawai ? (
         <DataGrid
           autoHeight
           disableColumnFilter
@@ -859,7 +789,7 @@ const TableKelolaReportos = () => {
           pageSizeOptions={[7, 10, 25, 50]}
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
-          rows={dataRutinitas}
+          rows={dataPegawai}
           sx={{
             '& .MuiSvgIcon-root': {
               fontSize: '1.125rem'
@@ -898,7 +828,7 @@ const TableKelolaReportos = () => {
           >
             <Box borderRadius={1}>
               <Typography variant='h6' style={{ color: '#CCCCCC' }}>
-                Tidak ada Data Kelola Laporan Kinerja Pegawai
+                Tidak ada Data Pegawai
               </Typography>
             </Box>
           </Box>

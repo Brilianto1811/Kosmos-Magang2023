@@ -1,5 +1,5 @@
 // ** React Imports
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // ** MUI Imports
 import Card from '@mui/material/Card'
@@ -8,7 +8,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid'
 
 // ** Data Import
 import { DataMdPegawai } from 'src/models/data-md-pegawai'
-import { GetPegawai, InsertPegawai, UpdatePegawai, DeletePegawai } from 'src/store/module-pegawai'
+import { GetPegawai, InsertPegawai, UpdateSuperadminPegawai, DeletePegawai } from 'src/store/module-pegawai'
 import React from 'react'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
@@ -18,60 +18,20 @@ import DialogActions from '@mui/material/DialogActions'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import Typography from '@mui/material/Typography'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import Box from '@mui/material/Box'
-import List from '@mui/material/List'
 import cloneDeep from 'clone-deep'
-import dayjs, { Dayjs } from 'dayjs'
-import { useDropzone } from 'react-dropzone'
-import ListItem from '@mui/material/ListItem'
-import IconButton from '@mui/material/IconButton'
 import usedecodetoken from 'src/utils/decodecookies'
-import { TimePicker } from '@mui/x-date-pickers/TimePicker'
 import { Icon } from '@iconify/react'
-import CustomChip from 'src/@core/components/mui/chip'
 import { Zoom, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { ThemeColor } from 'src/@core/layouts/types'
 import Divider from '@mui/material/Divider'
 import CustomTextField from 'src/@core/components/mui/text-field'
-import { baseURL } from 'src/utils/api'
-import { CircularProgress, FormControlLabel, Grid, Radio, RadioGroup } from '@mui/material'
-
-interface FileProp {
-  name: string
-  type: string
-  size: number
-}
-
-interface UserStatusType {
-  [key: string]: ThemeColor
-}
-
+import { CircularProgress, FormControlLabel, Grid, Radio, RadioGroup, TextField } from '@mui/material'
 
 const TableKelolaPegawai = () => {
-  const userStatusObj: UserStatusType = {
-    '0': 'warning', // Belum Diterima
-    '1': 'success', // Diterima
-    '2': 'error' // Sudah Selesai
-  }
 
   const notifysuccess = (msg: any) => {
     toast.success(msg, {
-      position: 'top-center',
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      transition: Zoom,
-      theme: 'light'
-    })
-  }
-
-  const notifywarning = (msg: any) => {
-    toast.warn(msg, {
       position: 'top-center',
       autoClose: 3000,
       hideProgressBar: false,
@@ -98,20 +58,6 @@ const TableKelolaPegawai = () => {
     })
   }
 
-  const { getRootProps, getInputProps } = useDropzone({
-    maxFiles: 1,
-    maxSize: 2000000,
-    accept: {
-      '/*': ['.', '.']
-    },
-    onDrop: (acceptedFiles: File[]) => {
-      setFiles(acceptedFiles.map((file: File) => Object.assign(file)))
-    },
-    onDropRejected: () => {
-      notifywarning('You can only upload 1 files & maximum size of 2 MB.')
-    }
-  })
-
   const form = {
     name_offpegawai: '',
     id_offpegawai: '',
@@ -121,45 +67,56 @@ const TableKelolaPegawai = () => {
     id_jabatan: '',
     id_bidang: '',
     id_bidangsub: '',
+    id_instansi: '',
     str_pswd: '',
     plt_bidang: '',
     plt_bidangsub: '',
     cc_112: '',
   }
   const [mainInput, setMainInput] = useState(cloneDeep(form))
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(new AdapterDayjs().date())
-  const [beforeselectedTime, setBeforeSelectedTime] = React.useState<Dayjs | null>(dayjs('2022-04-17T00:00'))
-  const [afterselectedTime, setAfterSelectedTime] = React.useState<Dayjs | null>(dayjs('2022-04-17T00:00'))
-  const [files, setFiles] = useState<File[]>([])
   const [dataPegawai, setDataPegawai] = useState<any>()
+  const [dataPegawaiFilter, setDataPegawaiFilter] = useState<any>()
   const [open, setOpen] = React.useState(false)
   const [openEdit, setOpenEdit] = React.useState(false)
   const [openDelete, setOpenDelete] = React.useState(false)
   const [Delete, setDelete] = useState<string>('') as [string, React.Dispatch<React.SetStateAction<string>>]
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 7 })
   const [selectedData, setSelectedData] = useState<any>(null)
-  const [openDialog, setOpenDialog] = useState(false)
-  const [currentImage, setCurrentImage] = useState('')
   const [dataLoaded, setDataLoaded] = useState<boolean>(false)
-  const selectedDate2 = useRef<Dayjs | null>(new AdapterDayjs().date())
   const [loading, setLoading] = useState<boolean>(false)
   const [golonganOptions, setGolonganOptions] = useState<{ id_golongan: number; name_golongan: string; }[]>([]);
   const [jabatanOptions, setJabatanOptions] = useState<{ id_jabatan: number; name_jabatan: string; }[]>([]);
   const [bidangOptions, setBidangOptions] = useState<{ id_bidang: number; name_bidang: string; }[]>([]);
   const [bidangsubOptions, setBidangsubOptions] = useState<{ id_bidangsub: number; name_bidangsub: string; }[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filteredData, setFilteredData] = useState<any[]>([]);
 
-  const fetchData = async (getDataFunction: () => Promise<void>) => {
-    try {
-      // Execute the data retrieval function
-      await getDataFunction()
-    } finally {
-      // Set loading to false after a delay of 3 seconds
-      setTimeout(() => {
-        setLoading(false)
-        setDataLoaded(true)
-      }, 700)
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    console.log(value);
+    filterData()
+  };
+
+  // Fungsi untuk memfilter data pegawai berdasarkan kata kunci pencarian
+  const filterData = () => {
+    if (!searchTerm) {
+      setFilteredData(dataPegawai); // Jika tidak ada pencarian, tampilkan semua data
+    } else {
+      setFilteredData(
+        dataPegawaiFilter.filter((pegawai: any) => {
+          // Misalnya kita mencari berdasarkan nama pegawai
+          return (
+            pegawai.name_offpegawai.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            pegawai.alias_offpegawai.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            pegawai.name_bidang.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            pegawai.name_bidangsub.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+        })
+      );
+      setDataPegawai(filteredData);
     }
-  }
+  };
 
   useEffect(() => {
     // Function to get data
@@ -208,12 +165,8 @@ const TableKelolaPegawai = () => {
     };
 
     // Fetch data when component mounts
-    fetchData();
+    fetchData(), filterData();
   }, []);
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
-  }
 
   const handleDeleteClick = (id_offpegawai: string) => {
     DeletePegawai(id_offpegawai)
@@ -241,14 +194,25 @@ const TableKelolaPegawai = () => {
         return (
           <>
             <Button
-              onClick={() => {
-                setOpenEdit(true)
-                console.log('data edit', row)
+              onClick={async () => {
+                setOpenEdit(true);
+                console.log('data edit', row);
 
+                // Jika row adalah objek
+                if (Array.isArray(row)) {
+                  const editData = row.map((val: { id_offpegawai: any; str_pswd?: string }) => ({
+                    ...val,
+                    str_pswd: '', // Setel str_pswd menjadi string kosong
+                  }));
+                  setSelectedData(editData);
+                } else {
+                  const editData = { ...row, str_pswd: '' }; // Jika row adalah objek tunggal
+                  setSelectedData(editData);
+                }
 
-
-                setSelectedData(row)
+                console.log('Updated selectedData:', selectedData);
               }}
+
             >
               <Icon icon='mingcute:pencil-line' color='#FFA500' width='25' height='25' />
             </Button>
@@ -289,7 +253,7 @@ const TableKelolaPegawai = () => {
       headerAlign: 'center',
       headerName: 'Nama Sub Bidang',
       flex: 0.2,
-      minWidth: 270
+      minWidth: 435
     },
     {
       field: 'name_golongan',
@@ -335,6 +299,7 @@ const TableKelolaPegawai = () => {
     bodyFormData.append('id_jabatan', mainInput.id_jabatan);
     bodyFormData.append('id_bidang', mainInput.id_bidang);
     bodyFormData.append('id_bidangsub', mainInput.id_bidangsub);
+    bodyFormData.append('id_instansi', '1');
     bodyFormData.append('str_pswd', 'newkosmos' + currentYear);
     bodyFormData.append('plt_bidang', '0');
     bodyFormData.append('plt_bidangsub', '0');
@@ -358,10 +323,9 @@ const TableKelolaPegawai = () => {
 
 
   const handleUpdate = async () => {
-    const decodedtoken = usedecodetoken()
     if (!selectedData) return
 
-    const id_offpegawai = decodedtoken?.id_offpegawai
+    const { id_offpegawai } = selectedData
     const { name_offpegawai } = selectedData
     const { alias_offpegawai } = selectedData
     const { nip_offpegawai } = selectedData
@@ -384,20 +348,23 @@ const TableKelolaPegawai = () => {
     bodyFormData.append('id_jabatan', id_jabatan)
     bodyFormData.append('id_bidang', id_bidang)
     bodyFormData.append('id_bidangsub', id_bidangsub)
-    bodyFormData.append('str_pswd', str_pswd)
+    bodyFormData.append('str_pswd', str_pswd ?? '')
     bodyFormData.append('plt_bidang', plt_bidang)
     bodyFormData.append('plt_bidangsub', plt_bidangsub)
     bodyFormData.append('cc_112', cc_112)
 
     try {
-      const response = await UpdatePegawai(bodyFormData)
-      handleCloseEdit()
-      notifysuccess(response.pesan)
-      getDataPegawai()
-    } catch (ex: any) {
-      // notifyerror(ex.response.data.pesan)
-      // Handle the error
-      // console.error(ex)
+      const response = await UpdateSuperadminPegawai(bodyFormData);
+
+      if (response.error === true) {
+        notifyerror(response.pesan);
+      } else {
+        handleCloseEdit();
+        notifysuccess(response.pesan);
+        getDataPegawai();
+      }
+    } catch (error: any) {
+      console.error('Terjadi kesalahan:', error.message);
     }
   }
 
@@ -424,6 +391,7 @@ const TableKelolaPegawai = () => {
       if (responseData && responseData.data) {
         const tmpData = responseData.data.map(val => ({ ...val, id: val.id_offpegawai }))
         setDataPegawai(tmpData)
+        setDataPegawaiFilter(tmpData)
         console.log('data dari database', dataPegawai)
         return tmpData
       } else {
@@ -435,19 +403,7 @@ const TableKelolaPegawai = () => {
   }
 
   useEffect(() => {
-    async function fetchData() {
-      // const data = dataPegawai;
-      // console.log(data, 'ini datanyaa');
-      // setGolonganOptions(data.golongan);
-      // setJabatanOptions(data.jabatan);
-      // setBidangOptions(data.bidang);
-      // setBidangsubOptions(data.bidangsub);
-    }
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    getDataPegawai(), setSelectedDate(new AdapterDayjs().date())
+    getDataPegawai()
   }, [])
 
   return (
@@ -466,15 +422,18 @@ const TableKelolaPegawai = () => {
         />
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+        <TextField
+          label="Cari Pegawai"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          style={{ marginRight: '10px' }}
+        />
         <Button
           variant='outlined'
           onClick={() => {
             setOpen(true)
-            setSelectedDate(new AdapterDayjs().date())
-            const currentTime = dayjs()
-
-            setBeforeSelectedTime(currentTime)
-            setAfterSelectedTime(currentTime)
           }}
           sx={{
             backgroundColor: '#50C878',
@@ -613,23 +572,6 @@ const TableKelolaPegawai = () => {
                     ))}
                   </RadioGroup>
                 </div>
-                {/* <div
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '20px' }}
-                >
-                  <Typography variant='body1' style={{ marginRight: '21px' }}>
-                    Password:
-                  </Typography>
-                  <CustomTextField
-                    placeholder='Masukkan Password'
-                    fullWidth
-                    type='password'
-                    value={mainInput.str_pswd}
-                    onChange={$event => setMainInput({ ...mainInput, str_pswd: $event.target.value })}
-                    style={{
-                      width: '530px'
-                    }}
-                  />
-                </div> */}
               </div>
             </LocalizationProvider>
           </DialogContent>
@@ -647,139 +589,165 @@ const TableKelolaPegawai = () => {
           <Divider style={{ margin: '10px 0', marginTop: '10px' }} />
           <DialogContent>
             {selectedData && (
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-15px' }}>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Nama Pegawai:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan Nama Pegawai'
-                      fullWidth
-                      value={selectedData.name_offpegawai}
-                      onChange={e => setSelectedData({ ...selectedData, name_offpegawai: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Alias Pegawai:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan Nama AliasPegawai'
-                      fullWidth
-                      value={selectedData.alias_offpegawai}
-                      onChange={e => setSelectedData({ ...selectedData, alias_offpegawai: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Nama Bidang:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan Nama Bidang'
-                      fullWidth
-                      value={selectedData.name_bidang}
-                      onChange={e => setSelectedData({ ...selectedData, name_bidang: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Nama Sub Bidang:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan Nama Sub Bidang'
-                      fullWidth
-                      value={selectedData.name_bidangsub}
-                      onChange={e => setSelectedData({ ...selectedData, name_bidangsub: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Nama Golongan:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan Nama Golongan'
-                      fullWidth
-                      value={selectedData.name_golongan}
-                      onChange={e => setSelectedData({ ...selectedData, name_golongan: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      Nama Jabatan:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan Nama Jabatan'
-                      fullWidth
-                      value={selectedData.name_jabatan}
-                      onChange={e => setSelectedData({ ...selectedData, name_jabatan: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant='body1' style={{ marginRight: '21px' }}>
-                      NIP:
-                    </Typography>
-                    <CustomTextField
-                      placeholder='Masukkan NIP'
-                      fullWidth
-                      value={selectedData.nip_offpegawai}
-                      onChange={e => setSelectedData({ ...selectedData, nip_offpegawai: e.target.value })}
-                      style={{
-                        width: '530px'
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
-                  >
-                    <Typography variant="body1" style={{ marginRight: '21px' }}>
-                      Password:
-                    </Typography>
-                    <CustomTextField
-                      placeholder="Masukkan Password"
-                      fullWidth
-                      type="password" // Tambahkan tipe password
-                      value={selectedData.str_pswd}
-                      onChange={(e) => setSelectedData({ ...selectedData, str_pswd: e.target.value })}
-                      style={{
-                        width: '530px',
-                      }}
-                    />
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '-15px' }}>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Pegawai:
+                  </Typography>
+                  <CustomTextField
+                    placeholder='Masukkan Nama Pegawai'
+                    fullWidth
+                    value={selectedData.name_offpegawai}
+                    onChange={e => setSelectedData({ ...selectedData, name_offpegawai: e.target.value })}
+                    style={{
+                      width: '530px'
+                    }}
+                  />
                 </div>
-              </LocalizationProvider>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Alias Pegawai:
+                  </Typography>
+                  <CustomTextField
+                    placeholder='Masukkan Nama AliasPegawai'
+                    fullWidth
+                    value={selectedData.alias_offpegawai}
+                    onChange={e => setSelectedData({ ...selectedData, alias_offpegawai: e.target.value })}
+                    style={{
+                      width: '530px'
+                    }}
+                  />
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Bidang:
+                  </Typography>
+                  <RadioGroup
+                    aria-label="bidang"
+                    name="bidang"
+                    value={selectedData.name_bidang || ''} // Gunakan name_bidang dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, name_bidang: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {bidangOptions.map((bidang) => (
+                      <FormControlLabel
+                        key={bidang.id_bidang}
+                        value={bidang.name_bidang} // Menyimpan name_bidang sebagai value
+                        control={<Radio />}
+                        label={bidang.name_bidang} // Menampilkan nama bidang sebagai label
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Sub Bidang:
+                  </Typography>
+                  <RadioGroup
+                    aria-label="bidang sub"
+                    name="bidang sub"
+                    value={selectedData.name_bidangsub || ''} // Gunakan name_bidangsub dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, name_bidangsub: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {bidangsubOptions.map((bidangsub) => (
+                      <FormControlLabel
+                        key={bidangsub.id_bidangsub}
+                        value={bidangsub.name_bidangsub} // Menyimpan name_bidangsub sebagai value
+                        control={<Radio />}
+                        label={bidangsub.name_bidangsub} // Menampilkan nama bidang sebagai label
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Golongan:
+                  </Typography>
+                  <RadioGroup
+                    aria-label="golongan"
+                    name="golongan"
+                    value={selectedData.name_golongan || ''} // Gunakan name_golongan dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, name_golongan: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {golonganOptions.map((golongan) => (
+                      <FormControlLabel
+                        key={golongan.id_golongan}
+                        value={golongan.name_golongan} // Menyimpan name_golongan sebagai value
+                        control={<Radio />}
+                        label={golongan.name_golongan} // Menampilkan nama bidang sebagai label
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    Nama Jabatan:
+                  </Typography>
+                  <RadioGroup
+                    aria-label="jabatan"
+                    name="jabatan"
+                    value={selectedData.name_jabatan || ''} // Gunakan name_jabatan dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, name_jabatan: e.target.value })}
+                    style={{ flexDirection: 'row' }}
+                  >
+                    {jabatanOptions.map((jabatan) => (
+                      <FormControlLabel
+                        key={jabatan.id_jabatan}
+                        value={jabatan.name_jabatan} // Menyimpan name_jabatan sebagai value
+                        control={<Radio />}
+                        label={jabatan.name_jabatan} // Menampilkan nama bidang sebagai label
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant='body1' style={{ marginRight: '21px' }}>
+                    NIP:
+                  </Typography>
+                  <CustomTextField
+                    placeholder='Masukkan NIP'
+                    fullWidth
+                    value={selectedData.nip_offpegawai}
+                    onChange={e => setSelectedData({ ...selectedData, nip_offpegawai: e.target.value })}
+                    style={{
+                      width: '530px'
+                    }}
+                  />
+                </div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '10px' }}
+                >
+                  <Typography variant="body1" style={{ marginRight: '21px' }}>
+                    Password:
+                  </Typography>
+                  <CustomTextField
+                    placeholder="Masukkan Password"
+                    fullWidth
+                    type="password" // Tambahkan tipe password
+                    // value={selectedData.str_pswd}
+                    onChange={(e) => setSelectedData({ ...selectedData, str_pswd: e.target.value })}
+                    style={{
+                      width: '530px',
+                    }}
+                  />
+                </div>
+              </div>
             )}
           </DialogContent>
           <DialogActions>
@@ -798,12 +766,6 @@ const TableKelolaPegawai = () => {
             <Button onClick={handleCloseDelete}>Cancel</Button>
             <Button onClick={() => handleDeleteClick(Delete)}>Delete</Button>
           </DialogActions>
-        </Dialog>
-        <Dialog open={openDialog} onClose={handleCloseDialog}>
-          <DialogTitle style={{ textAlign: 'center' }}>DETAIL FOTO</DialogTitle>
-          <DialogContent>
-            <img src={currentImage} alt='Dialog' style={{ width: '100%' }} />
-          </DialogContent>
         </Dialog>
       </div>
       {loading && (

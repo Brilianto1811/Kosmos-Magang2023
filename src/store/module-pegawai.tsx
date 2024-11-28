@@ -15,8 +15,8 @@ export const InsertPegawai = async (taskData: any) => {
   return response.data
 }
 
-export const UpdatePegawai = async (taskData: any) => {
-  const response = await api.post<ResponseDataMdPegawai>(`/update-datamdpegawai`, taskData)
+export const UpdateSuperadminPegawai = async (taskData: any) => {
+  const response = await api.post<ResponseDataMdPegawai>(`/update-superdatamdpegawai`, taskData)
 
   return response.data
 }
