@@ -65,7 +65,6 @@ const VerticalNavItems = (props: Props) => {
 
     setFilteredNavItems(filteredItems);
   }, [verticalNavItems]);
-  // pastikan untuk menyertakan verticalNavItems dalam dependencies agar efek samping diterapkan saat berubah
 
   const RenderMenuItems = filteredNavItems.map((item: NavGroup | NavLink | NavSectionTitle, index: number) => {
     const TagName: any = resolveNavItemComponent(item)

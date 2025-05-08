@@ -148,23 +148,19 @@ const TableKelolaPegawai = () => {
             name_bidangsub: item.name_bidangsub
           }]) ?? []).values()
         );
-        // console.log('golongan', data[0]);
         setGolonganOptions(uniqueGolongan);
         setJabatanOptions(uniqueJabatan);
         setBidangOptions(uniqueBidang);
         setBidangsubOptions(uniqueBidangSub);
         console.log(data, 'ini datanyaa');
       } finally {
-        // Set loading to false after a delay of 3 seconds
         setTimeout(() => {
           setLoading(false);
           setDataLoaded(true);
-          // const data = dataPegawai;
         }, 700);
       }
     };
 
-    // Fetch data when component mounts
     fetchData(), filterData();
   }, []);
 
@@ -353,6 +349,7 @@ const TableKelolaPegawai = () => {
     bodyFormData.append('plt_bidangsub', plt_bidangsub)
     bodyFormData.append('cc_112', cc_112)
 
+    console.log(bodyFormData, 'tes update');
     try {
       const response = await UpdateSuperadminPegawai(bodyFormData);
 
@@ -361,7 +358,11 @@ const TableKelolaPegawai = () => {
       } else {
         handleCloseEdit();
         notifysuccess(response.pesan);
-        getDataPegawai();
+        setTimeout(() => {
+          setLoading(false);
+          setDataLoaded(true);
+          getDataPegawai();
+        }, 700);
       }
     } catch (error: any) {
       console.error('Terjadi kesalahan:', error.message);
@@ -393,18 +394,16 @@ const TableKelolaPegawai = () => {
         setDataPegawai(tmpData)
         setDataPegawaiFilter(tmpData)
         console.log('data dari database', dataPegawai)
+
         return tmpData
       } else {
         setDataPegawai(null)
       }
+
     } catch (error) {
       console.error(error)
     }
   }
-
-  useEffect(() => {
-    getDataPegawai()
-  }, [])
 
   return (
     <Card>
@@ -631,14 +630,14 @@ const TableKelolaPegawai = () => {
                   <RadioGroup
                     aria-label="bidang"
                     name="bidang"
-                    value={selectedData.name_bidang || ''} // Gunakan name_bidang dari selectedData
-                    onChange={e => setSelectedData({ ...selectedData, name_bidang: e.target.value })}
+                    value={selectedData.id_bidang || ''} // Gunakan id_bidang dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, id_bidang: e.target.value })}
                     style={{ flexDirection: 'row' }}
                   >
                     {bidangOptions.map((bidang) => (
                       <FormControlLabel
                         key={bidang.id_bidang}
-                        value={bidang.name_bidang} // Menyimpan name_bidang sebagai value
+                        value={bidang.id_bidang} // Menyimpan name_bidang sebagai value
                         control={<Radio />}
                         label={bidang.name_bidang} // Menampilkan nama bidang sebagai label
                       />
@@ -654,14 +653,14 @@ const TableKelolaPegawai = () => {
                   <RadioGroup
                     aria-label="bidang sub"
                     name="bidang sub"
-                    value={selectedData.name_bidangsub || ''} // Gunakan name_bidangsub dari selectedData
-                    onChange={e => setSelectedData({ ...selectedData, name_bidangsub: e.target.value })}
+                    value={selectedData.id_bidangsub || ''} // Gunakan id_bidangsub dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, id_bidangsub: e.target.value })}
                     style={{ flexDirection: 'row' }}
                   >
                     {bidangsubOptions.map((bidangsub) => (
                       <FormControlLabel
                         key={bidangsub.id_bidangsub}
-                        value={bidangsub.name_bidangsub} // Menyimpan name_bidangsub sebagai value
+                        value={bidangsub.id_bidangsub} // Menyimpan name_bidangsub sebagai value
                         control={<Radio />}
                         label={bidangsub.name_bidangsub} // Menampilkan nama bidang sebagai label
                       />
@@ -677,14 +676,14 @@ const TableKelolaPegawai = () => {
                   <RadioGroup
                     aria-label="golongan"
                     name="golongan"
-                    value={selectedData.name_golongan || ''} // Gunakan name_golongan dari selectedData
-                    onChange={e => setSelectedData({ ...selectedData, name_golongan: e.target.value })}
+                    value={selectedData.id_golongan || ''} // Gunakan id_golongan dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, id_golongan: e.target.value })}
                     style={{ flexDirection: 'row' }}
                   >
                     {golonganOptions.map((golongan) => (
                       <FormControlLabel
                         key={golongan.id_golongan}
-                        value={golongan.name_golongan} // Menyimpan name_golongan sebagai value
+                        value={golongan.id_golongan} // Menyimpan name_golongan sebagai value
                         control={<Radio />}
                         label={golongan.name_golongan} // Menampilkan nama bidang sebagai label
                       />
@@ -700,14 +699,14 @@ const TableKelolaPegawai = () => {
                   <RadioGroup
                     aria-label="jabatan"
                     name="jabatan"
-                    value={selectedData.name_jabatan || ''} // Gunakan name_jabatan dari selectedData
-                    onChange={e => setSelectedData({ ...selectedData, name_jabatan: e.target.value })}
+                    value={selectedData.id_jabatan || ''} // Gunakan id_jabatan dari selectedData
+                    onChange={e => setSelectedData({ ...selectedData, id_jabatan: e.target.value })}
                     style={{ flexDirection: 'row' }}
                   >
                     {jabatanOptions.map((jabatan) => (
                       <FormControlLabel
                         key={jabatan.id_jabatan}
-                        value={jabatan.name_jabatan} // Menyimpan name_jabatan sebagai value
+                        value={jabatan.id_jabatan} // Menyimpan name_jabatan sebagai value
                         control={<Radio />}
                         label={jabatan.name_jabatan} // Menampilkan nama bidang sebagai label
                       />

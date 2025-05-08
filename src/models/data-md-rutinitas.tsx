@@ -27,4 +27,5 @@ export interface DataMdRutinitas {
   user_assign: string
   plt_bidang: any
   plt_bidangsub: any
+  kategori: number
 }

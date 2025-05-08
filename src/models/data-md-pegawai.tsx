@@ -29,4 +29,5 @@ export interface DataMdPegawai {
   plt_bidangsub: any
   cc_112: number
   no_telp: string
+  kategori: number
 }

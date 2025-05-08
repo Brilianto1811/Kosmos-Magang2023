@@ -332,7 +332,7 @@ const LoginPage = () => {
           </Box>
           <Box sx={{ width: 325 }}>
             <ReCAPTCHA sitekey='6LcqlQApAAAAAG8L-MgTHY9xmuTF8BQABAad5pFv' onChange={handleCaptchaChange} />
-            {/* 6LdyUkEpAAAAAALiZ4K_dMeY1Kgcfd4ygghzgU6M */}
+            {/* 6LdyUkEpAAAAAALiZ4K_dMeY1Kgcfd4ygghzgU6M //ini captcha buat localhost */}
             <Button
               fullWidth
               type='submit'

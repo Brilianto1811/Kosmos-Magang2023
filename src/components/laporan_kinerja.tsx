@@ -10,7 +10,7 @@ import { DataMdRutinitas } from 'src/models/data-md-rutinitas'
 import { GetTaskByIdPegawai3Laporan } from 'src/store/module-penugasan'
 import { DataMdPegawai, ResponseDataMdPegawai } from 'src/models/data-md-pegawai'
 import jwt_decode from 'jwt-decode'
-import api from 'src/utils/api'
+import api, { baseURL } from 'src/utils/api'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 
@@ -29,7 +29,7 @@ const LaporanKinerja = () => {
   const [monthReport, setMonthReport] = useState('')
   const [yearReport, setYearReport] = useState('')
   const [nameOffreportos, setNameOffreportos] = useState('')
-  const [dataOptionById, setdataOptionById] = useState<DataMdPegawai[]>()
+  const [dataOptionById, setdataOptionById] = useState<DataMdPegawai[]>([])
   const [dataPegawai, setDataPegawai] = useState<any[]>([])
   const [namaAtasan, setNamaAtasan] = useState<string>()
   const [nipAtasan, setNIPAtasan] = useState<string>()
@@ -274,7 +274,7 @@ const LaporanKinerja = () => {
   return (
     <>
       <style>
-      {`
+        {`
         @media print {
           @page {
             margin-top: 2cm;
@@ -291,7 +291,7 @@ const LaporanKinerja = () => {
           }
         }
       `}
-    </style>
+      </style>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <DatePicker
           label='Pilih Bulan dan Tahun'
@@ -382,47 +382,67 @@ const LaporanKinerja = () => {
                     Hari/Tanggal
                   </th>
                   <th style={{ border: '1px solid', padding: '8px' }}>Uraian Kegiatan</th>
+                  {dataOptionById.some(item => item.kategori === 1) && (
+                    <th style={{ border: '1px solid', padding: '8px' }}>Foto Kegiatan</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {[...dataRutinitas, ...data4]
-                  .filter(item => item.code_assign === 1) // Filter hanya code_assign === 1
+                  .filter(item => item.code_assign === 1)
                   .map((item, index) => {
-                    // Fungsi untuk mengonversi format jam
                     const convertToHHMM = (jam: any) => {
                       if (jam) {
-                        // Periksa apakah jam tidak undefined
-                        const [hours, minutes] = jam.split(':')
+                        const [hours, minutes] = jam.split(':');
 
-                        return `${hours}:${minutes}`
+                        return `${hours}:${minutes}`;
                       }
 
-                      return '' // Kembalikan string kosong jika jam undefined
-                    }
+                      return '';
+                    };
+
+                    const imageUrl =
+                      item.str_file && item.str_file.length > 0
+                        ? `${baseURL}/detailkeg/:?file=` + item.str_file
+                        : '/images/diskominfo/user2.png';
+
+                    const showFoto = dataOptionById.some(item => item.kategori === 1);
 
                     return (
                       <tr key={item.id_offkeg || item.id_userassign}>
                         <td style={{ border: '1px solid', padding: '8px', textAlign: 'center' }}>{index + 1}</td>
                         <td style={{ border: '1px solid', padding: '8px', textAlign: 'center' }}>
-                          {item.tgl_offkeg || item.tgl_offtask}{' '}
+                          {item.tgl_offkeg || item.tgl_offtask}
                         </td>
                         <td style={{ border: '1px solid', padding: '8px' }}>
-                          {
-                            item.code_assign === 1 // Hanya jika code_assign === 1
-                              ? `[${convertToHHMM(item.jam_offkeg)}] - [${convertToHHMM(item.jam_offkeg2)}] ${
-                                  item.cap_offkeg
-                                }`
-                              : null // Jika tidak, kembalikan null atau bisa juga tampilkan pesan lain
-                          }
+                          {`[${convertToHHMM(item.jam_offkeg)}] - [${convertToHHMM(item.jam_offkeg2)}] ${item.cap_offkeg}`}
                         </td>
+                        {showFoto && (
+                          <td style={{ border: '1px solid', padding: '8px', textAlign: 'center' }}>
+                            <img
+                              src={imageUrl}
+                              alt="Foto Kegiatan"
+                              style={{
+                                width: '160px',
+                                height: '80px',
+                                cursor: 'pointer',
+                                borderRadius: '5%',
+                                border: '1px solid grey',
+                                objectFit: 'cover',
+                              }}
+                              onError={(e) => {
+                                e.currentTarget.src = '/images/diskominfo/user2.png';
+                              }}
+                            />
+                          </td>
+                        )}
                       </tr>
-                    )
+                    );
                   })}
               </tbody>
             </table>
           </div>
         </div>
-
         <div
           className='pagebreak'
           style={{
